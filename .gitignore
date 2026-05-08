@@ -1,0 +1,21 @@
+# Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Application secrets
+src/main/resources/application.properties
+src/main/resources/application-*.properties
+!src/main/resources/application.properties.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.xml.bak
+
+# OS
+.DS_Store
+Thumbs.db
