@@ -77,7 +77,7 @@ public class AuthController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("Kullanıcı bulunamadı."));
         try {
-            userService.changePassword(user.getId(), request.getNewPassword());
+            userService.changePassword(user.getId(), request.getCurrentPassword(), request.getNewPassword());
             return ResponseEntity.ok("Şifre başarıyla güncellendi.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
