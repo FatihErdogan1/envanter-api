@@ -115,6 +115,7 @@ public class UserService {
         String tempPassword = generateTempPassword();
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
         user.setForcePasswordChange(true);
+        user.setActive(true);
         userRepository.save(user);
         mailService.sendPasswordReset(user.getEmail(), tempPassword);
         return tempPassword;
@@ -157,9 +158,11 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void changePassword(int userId, String newPassword) {
+    public void changePassword(int userId, String currentPassword, String newPassword) {
         validatePassword(newPassword);
         User user = getOrThrow(userId);
+        if (currentPassword != null && !passwordEncoder.matches(currentPassword, user.getPasswordHash()))
+            throw new IllegalArgumentException("Mevcut şifre hatalı.");
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setForcePasswordChange(false);
         userRepository.save(user);
