@@ -1,5 +1,6 @@
 package org.example.inventoryapi.service;
 
+import org.example.inventoryapi.dto.WarehouseStockItem;
 import org.example.inventoryapi.model.entity.InventoryTransaction;
 import org.example.inventoryapi.model.entity.Product;
 import org.example.inventoryapi.model.enums.TransactionType;
@@ -27,27 +28,37 @@ public class InventoryService {
         return transactionRepository.findAllByOrderByTransactionDateDesc();
     }
 
+    public List<WarehouseStockItem> getWarehouseStock(int warehouseId) {
+        return transactionRepository.findStockByWarehouse(warehouseId);
+    }
+
     @Transactional
     public InventoryTransaction stockIn(InventoryTransaction tx) {
         if (tx.getQuantity() <= 0) throw new IllegalArgumentException("Miktar sıfırdan büyük olmalıdır.");
-        tx.setType(TransactionType.IN);
-        tx.setTransactionDate(LocalDateTime.now());
-        Product product = tx.getProduct();
+        Product product = productRepository.findById(tx.getProduct().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
         product.setQuantityInStock(product.getQuantityInStock() + tx.getQuantity());
         productRepository.save(product);
+        tx.setProduct(product);
+        tx.setType(TransactionType.IN);
+        tx.setTransactionDate(LocalDateTime.now());
         return transactionRepository.save(tx);
     }
 
     @Transactional
     public InventoryTransaction stockOut(InventoryTransaction tx) {
         if (tx.getQuantity() <= 0) throw new IllegalArgumentException("Miktar sıfırdan büyük olmalıdır.");
-        Product product = tx.getProduct();
-        if (product.getQuantityInStock() < tx.getQuantity())
-            throw new IllegalStateException("Yetersiz stok. Mevcut: " + product.getQuantityInStock());
-        tx.setType(TransactionType.OUT);
-        tx.setTransactionDate(LocalDateTime.now());
+        Product product = productRepository.findById(tx.getProduct().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
+        int warehouseId = tx.getWarehouse().getId();
+        long warehouseQty = transactionRepository.getProductStockInWarehouse(product.getId(), warehouseId);
+        if (warehouseQty < tx.getQuantity())
+            throw new IllegalStateException("Depoda yetersiz stok. Mevcut: " + warehouseQty);
         product.setQuantityInStock(product.getQuantityInStock() - tx.getQuantity());
         productRepository.save(product);
+        tx.setProduct(product);
+        tx.setType(TransactionType.OUT);
+        tx.setTransactionDate(LocalDateTime.now());
         return transactionRepository.save(tx);
     }
 
@@ -55,9 +66,13 @@ public class InventoryService {
     public InventoryTransaction transfer(InventoryTransaction tx) {
         if (tx.getQuantity() <= 0) throw new IllegalArgumentException("Miktar sıfırdan büyük olmalıdır.");
         if (tx.getDestinationWarehouse() == null) throw new IllegalArgumentException("Hedef depo seçilmelidir.");
-        Product product = tx.getProduct();
-        if (product.getQuantityInStock() < tx.getQuantity())
-            throw new IllegalStateException("Yetersiz stok. Mevcut: " + product.getQuantityInStock());
+        Product product = productRepository.findById(tx.getProduct().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
+        int warehouseId = tx.getWarehouse().getId();
+        long warehouseQty = transactionRepository.getProductStockInWarehouse(product.getId(), warehouseId);
+        if (warehouseQty < tx.getQuantity())
+            throw new IllegalStateException("Depoda yetersiz stok. Mevcut: " + warehouseQty);
+        tx.setProduct(product);
         tx.setType(TransactionType.TRANSFER);
         tx.setTransactionDate(LocalDateTime.now());
         return transactionRepository.save(tx);

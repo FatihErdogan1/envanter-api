@@ -36,6 +36,10 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
         if (productRepository.existsBySkuIgnoreCaseAndIdNot(updated.getSku(), id))
             throw new IllegalArgumentException("Bu SKU başka bir ürüne ait.");
+        if (updated.getPrice() != null && updated.getPrice().signum() < 0)
+            throw new IllegalArgumentException("Fiyat negatif olamaz.");
+        if (updated.getQuantityInStock() < 0)
+            throw new IllegalArgumentException("Stok miktarı negatif olamaz.");
         existing.setSku(updated.getSku());
         existing.setName(updated.getName());
         existing.setCategory(updated.getCategory());
