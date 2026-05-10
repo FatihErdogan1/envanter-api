@@ -3,7 +3,6 @@ package org.example.inventoryapi.model.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.example.inventoryapi.model.enums.Role;
-import org.example.inventoryapi.model.entity.Warehouse;
 
 @Entity
 @Table(name = "Users")

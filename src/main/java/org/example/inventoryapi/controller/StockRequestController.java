@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -89,7 +88,6 @@ public class StockRequestController {
                 .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı."));
     }
 
-    @SuppressWarnings("unchecked")
     private int extractId(Object value) {
         if (value instanceof Number n) return n.intValue();
         if (value instanceof Map<?, ?> map) return ((Number) map.get("id")).intValue();
