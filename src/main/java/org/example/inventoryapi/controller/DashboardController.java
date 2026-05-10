@@ -41,6 +41,8 @@ public class DashboardController {
         long retiredAssets      = assetRepository.findAll().stream()
                 .filter(a -> a.getStatus() == AssetStatus.RETIRED).count();
 
+        long criticalStockCount = productRepository.countByQuantityInStockLessThan(10);
+
         return Map.of(
             "totalUsers",         totalUsers,
             "totalProducts",      totalProducts,
@@ -49,7 +51,8 @@ public class DashboardController {
             "availableAssets",    availableAssets,
             "inUseAssets",        inUseAssets,
             "maintenanceAssets",  maintenanceAssets,
-            "retiredAssets",      retiredAssets
+            "retiredAssets",      retiredAssets,
+            "criticalStockCount", criticalStockCount
         );
     }
 }
