@@ -1,0 +1,95 @@
+# ── Değişkenler ───────────────────────────────────────────────────────────────
+@baseUrl = http://localhost:8080/api
+@contentType = application/json
+
+# ── Login (Token almak için önce bunu çalıştır) ───────────────────────────────
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+# ── Demirbaş Listesi ──────────────────────────────────────────────────────────
+GET {{baseUrl}}/assets
+Authorization: Bearer {{token}}
+
+### Demirbaş Ekle
+POST {{baseUrl}}/assets
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "serialNumber": "SN-2024-001",
+  "name": "Dell Laptop",
+  "purchaseDate": "2024-01-15",
+  "warehouse": { "id": 1 },
+  "supplier": { "id": 1 }
+}
+
+### Demirbaş Güncelle
+PUT {{baseUrl}}/assets/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "serialNumber": "SN-2024-001",
+  "name": "Dell Laptop Pro",
+  "purchaseDate": "2024-01-15",
+  "status": "AVAILABLE",
+  "warehouse": { "id": 1 },
+  "supplier": { "id": 1 }
+}
+
+### Demirbaş Sil
+DELETE {{baseUrl}}/assets/1
+Authorization: Bearer {{token}}
+
+### Zimmetle
+POST {{baseUrl}}/assets/1/assign
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": 2,
+  "notes": "Test zimmeti"
+}
+
+### Zimmet Düşür
+POST {{baseUrl}}/assets/1/return
+Authorization: Bearer {{token}}
+
+### Hurdaya Ayır
+POST {{baseUrl}}/assets/1/retire
+Authorization: Bearer {{token}}
+
+### Bakıma Al
+POST {{baseUrl}}/assets/1/maintenance/start
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "description": "Ekran arızası",
+  "notes": "Servis bekliyor"
+}
+
+### Bakımı Bitir
+POST {{baseUrl}}/assets/1/maintenance/end
+Authorization: Bearer {{token}}
+
+### Zimmet Geçmişi
+GET {{baseUrl}}/assets/1/assignments
+Authorization: Bearer {{token}}
+
+### Bakım Geçmişi
+GET {{baseUrl}}/assets/1/maintenance
+Authorization: Bearer {{token}}
+
+### Depo Durum Özeti
+GET {{baseUrl}}/assets/warehouse-summary
+Authorization: Bearer {{token}}

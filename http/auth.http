@@ -1,0 +1,41 @@
+# ── Değişkenler ───────────────────────────────────────────────────────────────
+@baseUrl = http://localhost:8080/api
+@contentType = application/json
+
+# ── Login ─────────────────────────────────────────────────────────────────────
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Kayıt ol
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "Erva",
+  "email": "vomexit785@ellbit.com",
+  "password": "Erva123."
+}
+
+### Şifremi unuttum
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "email": "vomexit785@ellbit.com"
+}
+
+### Şifre değiştir (token gerekli)
+POST {{baseUrl}}/auth/change-password
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "currentPassword": "Erva123.",
+  "newPassword": "Erva456."
+}

@@ -1,0 +1,59 @@
+# ── Değişkenler ───────────────────────────────────────────────────────────────
+@baseUrl = http://localhost:8080/api
+@contentType = application/json
+
+# ── Login (Token almak için önce bunu çalıştır) ───────────────────────────────
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+# ── Kullanıcılar (Yalnızca ADMIN) ─────────────────────────────────────────────
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### Zimmetlenebilir Kullanıcılar (ADMIN + MANAGER)
+GET {{baseUrl}}/users/assignable
+Authorization: Bearer {{token}}
+
+### Kullanıcı Ekle
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "username": "ahmet",
+  "email": "ahmet@mail.com",
+  "password": "1234",
+  "role": "STAFF",
+  "active": true,
+  "warehouse": { "id": 1 }
+}
+
+### Kullanıcı Güncelle
+PUT {{baseUrl}}/users/2
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "username": "ahmet",
+  "email": "ahmet@mail.com",
+  "role": "MANAGER",
+  "active": true,
+  "warehouse": { "id": 2 }
+}
+
+### Şifre Sıfırla
+POST {{baseUrl}}/users/2/reset-password
+Authorization: Bearer {{token}}
+
+### Kullanıcı Sil
+DELETE {{baseUrl}}/users/2
+Authorization: Bearer {{token}}

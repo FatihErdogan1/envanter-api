@@ -1,0 +1,143 @@
+# ── Değişkenler ───────────────────────────────────────────────────────────────
+@baseUrl = http://localhost:8080/api
+@contentType = application/json
+
+# ── Login (Token almak için önce bunu çalıştır) ───────────────────────────────
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+# ── Depolar ───────────────────────────────────────────────────────────────────
+GET {{baseUrl}}/warehouses
+Authorization: Bearer {{token}}
+
+### Depo Ekle
+POST {{baseUrl}}/warehouses
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Yeni Depo",
+  "locationAddress": "Ankara, Türkiye"
+}
+
+### Depo Güncelle
+PUT {{baseUrl}}/warehouses/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Merkez Depo",
+  "locationAddress": "İstanbul, Türkiye"
+}
+
+### Depo Sil
+DELETE {{baseUrl}}/warehouses/1
+Authorization: Bearer {{token}}
+
+# ── Kategoriler ───────────────────────────────────────────────────────────────
+### Kategori Listesi
+GET {{baseUrl}}/categories
+Authorization: Bearer {{token}}
+
+### Kategori Ekle
+POST {{baseUrl}}/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Elektronik",
+  "description": "Elektronik ürünler"
+}
+
+### Kategori Güncelle
+PUT {{baseUrl}}/categories/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Elektronik",
+  "description": "Güncellenmiş açıklama"
+}
+
+### Kategori Sil
+DELETE {{baseUrl}}/categories/1
+Authorization: Bearer {{token}}
+
+# ── Ürünler ───────────────────────────────────────────────────────────────────
+### Ürün Listesi
+GET {{baseUrl}}/products
+Authorization: Bearer {{token}}
+
+### Ürün Ekle
+POST {{baseUrl}}/products
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Klavye",
+  "sku": "KB-001",
+  "price": 299.90,
+  "category": { "id": 1 }
+}
+
+### Ürün Güncelle
+PUT {{baseUrl}}/products/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Mekanik Klavye",
+  "sku": "KB-001",
+  "price": 399.90,
+  "category": { "id": 1 }
+}
+
+### Ürün Sil
+DELETE {{baseUrl}}/products/1
+Authorization: Bearer {{token}}
+
+# ── Tedarikçiler ──────────────────────────────────────────────────────────────
+### Tedarikçi Listesi
+GET {{baseUrl}}/suppliers
+Authorization: Bearer {{token}}
+
+### Tedarikçi Ekle
+POST {{baseUrl}}/suppliers
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Tech A.Ş.",
+  "email": "info@tech.com",
+  "phone": "0212 000 0000",
+  "address": "İstanbul"
+}
+
+### Tedarikçi Güncelle
+PUT {{baseUrl}}/suppliers/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Tech A.Ş.",
+  "email": "yeni@tech.com",
+  "phone": "0212 111 1111",
+  "address": "Ankara"
+}
+
+### Tedarikçi Sil
+DELETE {{baseUrl}}/suppliers/1
+Authorization: Bearer {{token}}
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+GET {{baseUrl}}/dashboard/stats
+Authorization: Bearer {{token}}

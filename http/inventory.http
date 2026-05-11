@@ -1,0 +1,96 @@
+# ── Değişkenler ───────────────────────────────────────────────────────────────
+@baseUrl = http://localhost:8080/api
+@contentType = application/json
+
+# ── Login (Token almak için önce bunu çalıştır) ───────────────────────────────
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+# ── Stok Hareketleri ──────────────────────────────────────────────────────────
+GET {{baseUrl}}/inventory/transactions
+Authorization: Bearer {{token}}
+
+### Stok Girişi
+POST {{baseUrl}}/inventory/in
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "product": { "id": 1 },
+  "warehouse": { "id": 1 },
+  "quantity": 50,
+  "notes": "İlk stok girişi"
+}
+
+### Stok Çıkışı
+POST {{baseUrl}}/inventory/out
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "product": { "id": 1 },
+  "warehouse": { "id": 1 },
+  "quantity": 10,
+  "notes": "Satış çıkışı"
+}
+
+### Depo Transferi
+POST {{baseUrl}}/inventory/transfer
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "product": { "id": 1 },
+  "warehouse": { "id": 1 },
+  "destinationWarehouse": { "id": 2 },
+  "quantity": 5,
+  "notes": "Merkez → Şube transferi"
+}
+
+### Depo Stok Durumu
+GET {{baseUrl}}/warehouses/1/stock
+Authorization: Bearer {{token}}
+
+# ── Stok Talepleri ────────────────────────────────────────────────────────────
+### Tüm Talepler
+GET {{baseUrl}}/stock-requests
+Authorization: Bearer {{token}}
+
+### Talep Oluştur
+POST {{baseUrl}}/stock-requests
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "product": { "id": 1 },
+  "warehouse": { "id": 1 },
+  "quantity": 20,
+  "notes": "Stok kritik seviyede"
+}
+
+### Talebi Onayla
+POST {{baseUrl}}/stock-requests/1/approve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "managerNote": "Onaylandı, sevkiyat başlatılıyor"
+}
+
+### Talebi Reddet
+POST {{baseUrl}}/stock-requests/1/reject
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "managerNote": "Bütçe yetersiz"
+}
