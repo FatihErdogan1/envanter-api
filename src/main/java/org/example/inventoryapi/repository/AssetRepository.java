@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface AssetRepository extends JpaRepository<Asset, Integer> {
     boolean existsBySerialNumberIgnoreCase(String serialNumber);
+    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, int id);
     int countBySupplierId(int supplierId);
     int countByWarehouseId(int warehouseId);
     List<Asset> findByWarehouse_Id(int warehouseId);

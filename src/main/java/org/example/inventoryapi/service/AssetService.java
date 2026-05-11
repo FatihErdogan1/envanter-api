@@ -17,42 +17,81 @@ public class AssetService {
     private final AssetAssignmentRepository  assignmentRepository;
     private final AssetTransferRepository    transferRepository;
     private final AssetMaintenanceRepository maintenanceRepository;
+    private final SupplierRepository         supplierRepository;
+    private final WarehouseRepository        warehouseRepository;
 
     public AssetService(AssetRepository assetRepository,
                         AssetAssignmentRepository assignmentRepository,
                         AssetTransferRepository transferRepository,
-                        AssetMaintenanceRepository maintenanceRepository) {
-        this.assetRepository     = assetRepository;
+                        AssetMaintenanceRepository maintenanceRepository,
+                        SupplierRepository supplierRepository,
+                        WarehouseRepository warehouseRepository) {
+        this.assetRepository      = assetRepository;
         this.assignmentRepository = assignmentRepository;
-        this.transferRepository  = transferRepository;
+        this.transferRepository   = transferRepository;
         this.maintenanceRepository = maintenanceRepository;
+        this.supplierRepository   = supplierRepository;
+        this.warehouseRepository  = warehouseRepository;
     }
 
     public List<Asset> getAllAssets(User requestingUser) {
-        List<Asset> assets = isAdmin(requestingUser)
-                ? assetRepository.findAll()
-                : (requestingUser.getWarehouse() != null
-                        ? assetRepository.findByWarehouse_Id(requestingUser.getWarehouse().getId())
-                        : List.of());
+        List<Asset> assets;
+        if (requestingUser.getRole() != Role.ADMIN) {
+            assets = requestingUser.getWarehouse() != null
+                    ? assetRepository.findByWarehouse_Id(requestingUser.getWarehouse().getId())
+                    : List.of();
+        } else {
+            assets = assetRepository.findAll();
+        }
         assets.forEach(a -> assignmentRepository
                 .findByAssetIdAndReturnDateIsNull(a.getId())
                 .ifPresent(aa -> a.setAssignedToUsername(aa.getUser().getUsername())));
         return assets;
     }
 
-    public Asset addAsset(Asset asset) {
+    public Asset addAsset(Asset asset, User requestingUser) {
         if (asset.getSerialNumber() == null || asset.getSerialNumber().isBlank())
             throw new IllegalArgumentException("Seri numarası zorunludur.");
+        if (asset.getName() == null || asset.getName().isBlank())
+            throw new IllegalArgumentException("Demirbaş adı zorunludur.");
+        if (asset.getWarehouse() == null || asset.getWarehouse().getId() <= 0)
+            throw new IllegalArgumentException("Depo seçilmelidir.");
         if (assetRepository.existsBySerialNumberIgnoreCase(asset.getSerialNumber()))
             throw new IllegalArgumentException("Bu seri numarası zaten kayıtlı.");
+        if (assetRepository.existsByNameIgnoreCase(asset.getName()))
+            throw new IllegalArgumentException("Bu isimde bir demirbaş zaten kayıtlı.");
         if (asset.getPurchaseDate() != null && asset.getPurchaseDate().isAfter(java.time.LocalDate.now()))
             throw new IllegalArgumentException("Satın alma tarihi gelecekte olamaz.");
+
+        Warehouse warehouse = warehouseRepository.findById(asset.getWarehouse().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Depo bulunamadı."));
+        asset.setWarehouse(warehouse);
+
+        if (requestingUser.getRole() != Role.ADMIN) {
+            if (requestingUser.getWarehouse() == null
+                    || requestingUser.getWarehouse().getId() != warehouse.getId())
+                throw new IllegalArgumentException("Yalnızca kendi deponuza demirbaş ekleyebilirsiniz.");
+        }
+
+        if (asset.getSupplier() != null && asset.getSupplier().getId() > 0) {
+            Supplier supplier = supplierRepository.findById(asset.getSupplier().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Tedarikçi bulunamadı."));
+            asset.setSupplier(supplier);
+        } else {
+            asset.setSupplier(null);
+        }
+
         if (asset.getStatus() == null) asset.setStatus(AssetStatus.AVAILABLE);
         return assetRepository.save(asset);
     }
 
     public Asset updateAsset(int id, Asset updated) {
         Asset existing = getOrThrow(id);
+        if (assetRepository.existsByNameIgnoreCaseAndIdNot(updated.getName(), id))
+            throw new IllegalArgumentException("Bu isimde bir demirbaş zaten kayıtlı.");
+        if (assetRepository.existsBySerialNumberIgnoreCase(updated.getSerialNumber())
+                && !existing.getSerialNumber().equalsIgnoreCase(updated.getSerialNumber()))
+            throw new IllegalArgumentException("Bu seri numarası zaten kayıtlı.");
         existing.setSerialNumber(updated.getSerialNumber());
         existing.setName(updated.getName());
         existing.setSupplier(updated.getSupplier());
@@ -74,8 +113,8 @@ public class AssetService {
             throw new IllegalStateException("Bu demirbaş zaten zimmetli.");
         Asset asset = getOrThrow(assetId);
         checkWarehouseAccess(requestingUser, asset);
-        if (!isAdmin(requestingUser) && (targetUser.getWarehouse() == null || asset.getWarehouse() == null
-                || targetUser.getWarehouse().getId() != asset.getWarehouse().getId()))
+        if (targetUser.getWarehouse() == null || asset.getWarehouse() == null
+                || targetUser.getWarehouse().getId() != asset.getWarehouse().getId())
             throw new IllegalStateException("Demirbaş sadece aynı depodaki kullanıcıya zimmetlenebilir.");
         if (asset.getStatus() == AssetStatus.MAINTENANCE) throw new IllegalStateException("Bakımdaki demirbaş zimmetlenemez.");
         if (asset.getStatus() == AssetStatus.RETIRED) throw new IllegalStateException("Hurda demirbaş zimmetlenemez.");

@@ -35,9 +35,11 @@ public class AssetController {
     }
 
     @PostMapping
-    public ResponseEntity<?> add(@RequestBody Asset asset) {
-        try { return ResponseEntity.ok(assetService.addAsset(asset)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<?> add(@AuthenticationPrincipal String username, @RequestBody Asset asset) {
+        try {
+            User requestingUser = getUser(username);
+            return ResponseEntity.ok(assetService.addAsset(asset, requestingUser));
+        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PutMapping("/{id}")

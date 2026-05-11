@@ -3,6 +3,8 @@ package org.example.inventoryapi.service;
 import org.example.inventoryapi.dto.WarehouseStockItem;
 import org.example.inventoryapi.model.entity.InventoryTransaction;
 import org.example.inventoryapi.model.entity.Product;
+import org.example.inventoryapi.model.entity.User;
+import org.example.inventoryapi.model.enums.Role;
 import org.example.inventoryapi.model.enums.TransactionType;
 import org.example.inventoryapi.repository.InventoryTransactionRepository;
 import org.example.inventoryapi.repository.ProductRepository;
@@ -46,8 +48,13 @@ public class InventoryService {
     }
 
     @Transactional
-    public InventoryTransaction stockOut(InventoryTransaction tx) {
+    public InventoryTransaction stockOut(InventoryTransaction tx, User requestingUser) {
         if (tx.getQuantity() <= 0) throw new IllegalArgumentException("Miktar sıfırdan büyük olmalıdır.");
+        if (requestingUser.getRole() != Role.ADMIN) {
+            if (requestingUser.getWarehouse() == null
+                    || requestingUser.getWarehouse().getId() != tx.getWarehouse().getId())
+                throw new IllegalStateException("Yalnızca kendi deponuzdan stok çıkışı yapabilirsiniz.");
+        }
         Product product = productRepository.findById(tx.getProduct().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
         int warehouseId = tx.getWarehouse().getId();
@@ -63,9 +70,14 @@ public class InventoryService {
     }
 
     @Transactional
-    public InventoryTransaction transfer(InventoryTransaction tx) {
+    public InventoryTransaction transfer(InventoryTransaction tx, User requestingUser) {
         if (tx.getQuantity() <= 0) throw new IllegalArgumentException("Miktar sıfırdan büyük olmalıdır.");
         if (tx.getDestinationWarehouse() == null) throw new IllegalArgumentException("Hedef depo seçilmelidir.");
+        if (requestingUser.getRole() != Role.ADMIN) {
+            if (requestingUser.getWarehouse() == null
+                    || requestingUser.getWarehouse().getId() != tx.getWarehouse().getId())
+                throw new IllegalStateException("Yalnızca kendi deponuzdan transfer yapabilirsiniz.");
+        }
         Product product = productRepository.findById(tx.getProduct().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
         int warehouseId = tx.getWarehouse().getId();
