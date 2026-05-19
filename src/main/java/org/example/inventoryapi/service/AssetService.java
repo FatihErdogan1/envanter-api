@@ -1,5 +1,6 @@
 package org.example.inventoryapi.service;
 
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.*;
 import org.example.inventoryapi.model.enums.AssetStatus;
 import org.example.inventoryapi.model.enums.Role;
@@ -102,6 +103,17 @@ public class AssetService {
     }
 
     public void deleteAsset(int id) {
+        Asset asset = getOrThrow(id);
+        assignmentRepository.findByAssetIdAndReturnDateIsNull(id).ifPresent(aa -> {
+            String username = aa.getUser() != null ? aa.getUser().getUsername() : "bir kullanıcı";
+            throw new DeletionBlockedException(
+                "Bu demirbaş " + username + " kullanıcısına zimmetli. Önce zimmeti düşürün.",
+                1, "zimmet");
+        });
+        if (asset.getStatus() == AssetStatus.MAINTENANCE)
+            throw new DeletionBlockedException(
+                "Bu demirbaş bakımda. Önce bakımı tamamlayın.",
+                1, "bakım");
         assetRepository.deleteById(id);
     }
 

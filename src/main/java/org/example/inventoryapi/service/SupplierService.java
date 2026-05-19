@@ -1,7 +1,9 @@
 package org.example.inventoryapi.service;
 
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.Supplier;
 import org.example.inventoryapi.repository.AssetRepository;
+import org.example.inventoryapi.repository.ProductRepository;
 import org.example.inventoryapi.repository.SupplierRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +18,12 @@ public class SupplierService {
 
     private final SupplierRepository supplierRepository;
     private final AssetRepository    assetRepository;
+    private final ProductRepository  productRepository;
 
-    public SupplierService(SupplierRepository supplierRepository, AssetRepository assetRepository) {
+    public SupplierService(SupplierRepository supplierRepository, AssetRepository assetRepository, ProductRepository productRepository) {
         this.supplierRepository = supplierRepository;
         this.assetRepository    = assetRepository;
+        this.productRepository  = productRepository;
     }
 
     public List<Supplier> getAllSuppliers() { return supplierRepository.findAll(); }
@@ -49,9 +53,16 @@ public class SupplierService {
     }
 
     public void deleteSupplier(int id) {
-        int count = assetRepository.countBySupplierId(id);
-        if (count > 0)
-            throw new IllegalStateException("Bu tedarikçiye ait " + count + " demirbaş var. Silinemez.");
+        int productCount = productRepository.countBySupplierId(id);
+        if (productCount > 0)
+            throw new DeletionBlockedException(
+                "Bu tedarikçiye ait " + productCount + " ürün var, önce kaldırın.",
+                productCount, "ürün");
+        int assetCount = assetRepository.countBySupplierId(id);
+        if (assetCount > 0)
+            throw new DeletionBlockedException(
+                "Bu tedarikçiye ait " + assetCount + " demirbaş var, önce kaldırın.",
+                assetCount, "demirbaş");
         supplierRepository.deleteById(id);
     }
 
