@@ -1,5 +1,7 @@
 package org.example.inventoryapi.controller;
 
+import org.example.inventoryapi.dto.DeletionErrorResponse;
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.*;
 import org.example.inventoryapi.repository.UserRepository;
 import org.example.inventoryapi.repository.WarehouseRepository;
@@ -50,8 +52,9 @@ public class AssetController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable int id) {
-        assetService.deleteAsset(id);
-        return ResponseEntity.ok("Demirbaş silindi.");
+        try { assetService.deleteAsset(id); return ResponseEntity.ok("Demirbaş silindi."); }
+        catch (DeletionBlockedException e) { return ResponseEntity.status(409).body(DeletionErrorResponse.of(e.getMessage(), e.getCount(), e.getRelatedEntity())); }
+        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/assign")

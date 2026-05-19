@@ -1,7 +1,10 @@
 package org.example.inventoryapi.service;
 
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.Warehouse;
 import org.example.inventoryapi.repository.AssetRepository;
+import org.example.inventoryapi.repository.InventoryTransactionRepository;
+import org.example.inventoryapi.repository.ProductRepository;
 import org.example.inventoryapi.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
 
@@ -10,12 +13,19 @@ import java.util.List;
 @Service
 public class WarehouseService {
 
-    private final WarehouseRepository warehouseRepository;
-    private final AssetRepository     assetRepository;
+    private final WarehouseRepository             warehouseRepository;
+    private final AssetRepository                 assetRepository;
+    private final ProductRepository               productRepository;
+    private final InventoryTransactionRepository  transactionRepository;
 
-    public WarehouseService(WarehouseRepository warehouseRepository, AssetRepository assetRepository) {
-        this.warehouseRepository = warehouseRepository;
-        this.assetRepository     = assetRepository;
+    public WarehouseService(WarehouseRepository warehouseRepository,
+                            AssetRepository assetRepository,
+                            ProductRepository productRepository,
+                            InventoryTransactionRepository transactionRepository) {
+        this.warehouseRepository  = warehouseRepository;
+        this.assetRepository      = assetRepository;
+        this.productRepository    = productRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
@@ -37,9 +47,24 @@ public class WarehouseService {
     }
 
     public void deleteWarehouse(int id) {
-        int count = assetRepository.countByWarehouseId(id);
-        if (count > 0)
-            throw new IllegalStateException("Bu depoda " + count + " demirbaş var. Silinemez.");
+        long totalStock = transactionRepository.getTotalStockInWarehouse(id);
+        if (totalStock > 0)
+            throw new DeletionBlockedException(
+                "Bu depoda " + totalStock + " adet stok kaydı var, önce boşaltın.",
+                (int) totalStock, "stok");
+
+        int assetCount = assetRepository.countByWarehouseId(id);
+        if (assetCount > 0)
+            throw new DeletionBlockedException(
+                "Bu depoda " + assetCount + " demirbaş var. Önce taşıyın.",
+                assetCount, "demirbaş");
+
+        int productCount = productRepository.countByWarehouseId(id);
+        if (productCount > 0)
+            throw new DeletionBlockedException(
+                "Bu depoya atanmış " + productCount + " ürün var. Önce kaldırın.",
+                productCount, "ürün");
+
         warehouseRepository.deleteById(id);
     }
 }

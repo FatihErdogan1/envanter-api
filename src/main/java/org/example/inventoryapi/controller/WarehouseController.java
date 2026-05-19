@@ -1,6 +1,8 @@
 package org.example.inventoryapi.controller;
 
+import org.example.inventoryapi.dto.DeletionErrorResponse;
 import org.example.inventoryapi.dto.WarehouseStockItem;
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.Warehouse;
 import org.example.inventoryapi.service.InventoryService;
 import org.example.inventoryapi.service.WarehouseService;
@@ -39,6 +41,7 @@ public class WarehouseController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable int id) {
         try { warehouseService.deleteWarehouse(id); return ResponseEntity.ok("Depo silindi."); }
+        catch (DeletionBlockedException e) { return ResponseEntity.status(409).body(DeletionErrorResponse.of(e.getMessage(), e.getCount(), e.getRelatedEntity())); }
         catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 

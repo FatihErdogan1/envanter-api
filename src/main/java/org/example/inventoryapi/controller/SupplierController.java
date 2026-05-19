@@ -1,5 +1,7 @@
 package org.example.inventoryapi.controller;
 
+import org.example.inventoryapi.dto.DeletionErrorResponse;
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.Supplier;
 import org.example.inventoryapi.service.SupplierService;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +37,7 @@ public class SupplierController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable int id) {
         try { supplierService.deleteSupplier(id); return ResponseEntity.ok("Tedarikçi silindi."); }
+        catch (DeletionBlockedException e) { return ResponseEntity.status(409).body(DeletionErrorResponse.of(e.getMessage(), e.getCount(), e.getRelatedEntity())); }
         catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 }

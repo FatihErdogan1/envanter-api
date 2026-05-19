@@ -1,7 +1,9 @@
 package org.example.inventoryapi.service;
 
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.Category;
 import org.example.inventoryapi.repository.CategoryRepository;
+import org.example.inventoryapi.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +12,11 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository  productRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, ProductRepository productRepository) {
         this.categoryRepository = categoryRepository;
+        this.productRepository  = productRepository;
     }
 
     public List<Category> getAllCategories() { return categoryRepository.findAll(); }
@@ -34,6 +38,11 @@ public class CategoryService {
     }
 
     public void deleteCategory(int id) {
+        int count = productRepository.countByCategoryId(id);
+        if (count > 0)
+            throw new DeletionBlockedException(
+                "Bu kategoride " + count + " ürün bulunuyor, önce taşıyın.",
+                count, "ürün");
         categoryRepository.deleteById(id);
     }
 }
