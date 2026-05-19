@@ -35,8 +35,17 @@ public class InventoryService {
     }
 
     @Transactional
-    public InventoryTransaction stockIn(InventoryTransaction tx) {
+    public InventoryTransaction stockIn(InventoryTransaction tx, User requestingUser) {
         if (tx.getQuantity() <= 0) throw new IllegalArgumentException("Miktar sıfırdan büyük olmalıdır.");
+        if (tx.getWarehouse() == null) throw new IllegalArgumentException("Depo belirtilmelidir.");
+        if (requestingUser.getRole() == Role.STAFF)
+            throw new SecurityException("STAFF rolü doğrudan stok girişi yapamaz.");
+        if (requestingUser.getRole() != Role.ADMIN) {
+            if (requestingUser.getWarehouse() == null)
+                throw new SecurityException("Kullanıcının atanmış bir deposu yok.");
+            if (requestingUser.getWarehouse().getId() != tx.getWarehouse().getId())
+                throw new SecurityException("Yalnızca kendi deponuza stok girişi yapabilirsiniz.");
+        }
         Product product = productRepository.findById(tx.getProduct().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
         product.setQuantityInStock(product.getQuantityInStock() + tx.getQuantity());

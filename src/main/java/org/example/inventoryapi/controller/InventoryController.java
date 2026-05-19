@@ -26,8 +26,10 @@ public class InventoryController {
     public List<InventoryTransaction> getAll() { return inventoryService.getAllTransactions(); }
 
     @PostMapping("/in")
-    public ResponseEntity<?> stockIn(@RequestBody InventoryTransaction tx) {
-        try { return ResponseEntity.ok(inventoryService.stockIn(tx)); }
+    public ResponseEntity<?> stockIn(@AuthenticationPrincipal String username,
+                                     @RequestBody InventoryTransaction tx) {
+        try { return ResponseEntity.ok(inventoryService.stockIn(tx, getUser(username))); }
+        catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
         catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
