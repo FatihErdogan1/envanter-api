@@ -1,3 +1,4 @@
+
 package org.example.inventoryapi;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

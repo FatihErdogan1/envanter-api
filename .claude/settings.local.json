@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\fyffa\\\\Desktop\\\\dersler\\\\envanter-api\\\\envanter-api\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object)",
+      "Read(//c/Users/fyffa/Desktop/dersler/**)",
+      "Bash(dir \"C:\\\\Users\\\\fyffa\\\\Desktop\\\\dersler\")",
+      "Bash(npx tsc *)",
+      "Bash(mvn compile *)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\fyffa\\\\Desktop\\\\dersler\\\\envanter-api\\\\envanter-api\\\\src\\\\main\\\\java\\\\org\\\\example\\\\inventoryapi\\\\exception\")",
+      "Bash(Out-Null)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\fyffa\\\\Desktop\\\\dersler\\\\envanter-ui\"; npx tsc --noEmit 2>&1; Write-Host \"Exit: $LASTEXITCODE\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\fyffa\\\\Desktop\\\\dersler\\\\envanter-ui\\\\src\\\\components\" -Recurse)",
+      "Bash(Sort-Object FullName)",
+      "Bash(\"C:/Users/fyffa/Desktop/dersler/envanter-ui/node_modules/.bin/tsc\" --noEmit --project \"C:/Users/fyffa/Desktop/dersler/envanter-ui/tsconfig.json\")",
+      "Bash(./mvnw clean *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat\\(api\\): silme bagimliligi kontrolu ve 409 hata yanitlari eklendi *)",
+      "Bash(git merge *)",
+      "Bash(git branch *)",
+      "Bash(git commit -m 'feat\\(api\\): urun-tedarikci many-to-many iliskisi ve yeni endpointler *)",
+      "Bash(git commit -m 'feat\\(api\\): urun bazi depo stok ozeti endpoint eklendi *)",
+      "Bash(git stash *)",
+      "Bash(git commit -m 'feat\\(api\\): urun islem gecmisi endpoint icin repository metodu eklendi *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

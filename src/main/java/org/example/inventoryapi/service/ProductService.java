@@ -1,6 +1,7 @@
 package org.example.inventoryapi.service;
 
 import org.example.inventoryapi.dto.ProductWarehouseStock;
+import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.InventoryTransaction;
 import org.example.inventoryapi.model.entity.Product;
 import org.example.inventoryapi.model.entity.Supplier;
@@ -81,6 +82,7 @@ public class ProductService {
         return saved;
     }
 
+    @Transactional
     public Product updateProduct(int id, Product updated, User requestingUser) {
         Product existing = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
@@ -91,22 +93,36 @@ public class ProductService {
             throw new IllegalArgumentException("Fiyat negatif olamaz.");
         if (updated.getQuantityInStock() < 0)
             throw new IllegalArgumentException("Stok miktarı negatif olamaz.");
-        Set<Supplier> suppliers = resolveSuppliers(updated);
-        Warehouse warehouse = resolveRequiredWarehouse(updated, requestingUser);
+        int oldQty = existing.getQuantityInStock();
+        int newQty = updated.getQuantityInStock();
         existing.setSku(updated.getSku());
         existing.setName(updated.getName());
         existing.setCategory(updated.getCategory());
-        existing.setSuppliers(suppliers);
-        existing.setWarehouse(warehouse);
         existing.setPrice(updated.getPrice());
-        existing.setQuantityInStock(updated.getQuantityInStock());
-        return productRepository.save(existing);
+        existing.setQuantityInStock(newQty);
+        Product saved = productRepository.save(existing);
+        int diff = newQty - oldQty;
+        if (diff != 0 && existing.getWarehouse() != null) {
+            InventoryTransaction tx = new InventoryTransaction();
+            tx.setProduct(saved);
+            tx.setWarehouse(existing.getWarehouse());
+            tx.setUser(requestingUser);
+            tx.setType(diff > 0 ? TransactionType.IN : TransactionType.OUT);
+            tx.setQuantity(Math.abs(diff));
+            tx.setNotes("Stok düzeltmesi");
+            tx.setTransactionDate(LocalDateTime.now());
+            transactionRepository.save(tx);
+        }
+        return saved;
     }
 
     public void deleteProduct(int id, User requestingUser) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
         checkProductWarehouseAccess(product, requestingUser);
+        if (transactionRepository.existsByProduct_Id(id))
+            throw new DeletionBlockedException(
+                    "Bu ürünün depo stok kayıtları mevcut, silinemez.", product.getQuantityInStock(), "InventoryTransaction");
         productRepository.deleteById(id);
     }
 

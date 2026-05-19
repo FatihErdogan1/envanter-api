@@ -69,7 +69,8 @@ public class AssetController {
                     .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı."));
             assetService.assignAsset(id, requestingUser, targetUser, notes);
             return ResponseEntity.ok("Demirbaş zimmetlendi.");
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/return")
@@ -79,7 +80,8 @@ public class AssetController {
             User requestingUser = getUser(username);
             assetService.returnAsset(id, requestingUser);
             return ResponseEntity.ok("Zimmet düşürüldü.");
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/retire")
@@ -88,7 +90,8 @@ public class AssetController {
         try {
             assetService.retireAsset(id, getUser(username));
             return ResponseEntity.ok("Demirbaş hurdaya ayrıldı.");
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/transfer")
@@ -102,7 +105,8 @@ public class AssetController {
                     .orElseThrow(() -> new IllegalArgumentException("Depo bulunamadı."));
             assetService.transferAsset(id, to, notes, getUser(username));
             return ResponseEntity.ok("Transfer tamamlandı.");
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/maintenance/start")
@@ -112,7 +116,8 @@ public class AssetController {
         try {
             assetService.startMaintenance(id, body.get("description"), body.getOrDefault("notes", ""), getUser(username));
             return ResponseEntity.ok("Demirbaş bakıma alındı.");
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/maintenance/end")
@@ -121,7 +126,8 @@ public class AssetController {
         try {
             assetService.endMaintenance(id, getUser(username));
             return ResponseEntity.ok("Bakım tamamlandı.");
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @GetMapping("/{id}/assignments")

@@ -37,9 +37,8 @@ public class StockRequestController {
     public ResponseEntity<?> getAll(@AuthenticationPrincipal String username) {
         try {
             return ResponseEntity.ok(stockRequestService.getRequestsFor(getUser(username)));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping
@@ -54,9 +53,8 @@ public class StockRequestController {
             String notes = (String) body.getOrDefault("notes", "");
             StockRequest request = stockRequestService.create(product, warehouse, quantity, notes, getUser(username));
             return ResponseEntity.ok(request);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/approve")
@@ -66,9 +64,8 @@ public class StockRequestController {
         try {
             String managerNote = body == null ? "" : (String) body.getOrDefault("managerNote", "");
             return ResponseEntity.ok(stockRequestService.approve(id, getUser(username), managerNote));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     @PostMapping("/{id}/reject")
@@ -78,9 +75,8 @@ public class StockRequestController {
         try {
             String managerNote = body == null ? "" : (String) body.getOrDefault("managerNote", "");
             return ResponseEntity.ok(stockRequestService.reject(id, getUser(username), managerNote));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
+          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
     private User getUser(String username) {

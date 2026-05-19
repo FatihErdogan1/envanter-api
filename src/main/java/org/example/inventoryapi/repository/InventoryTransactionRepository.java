@@ -14,6 +14,8 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
 
     List<InventoryTransaction> findByProduct_IdOrderByTransactionDateDesc(int productId);
 
+    boolean existsByProduct_Id(int productId);
+
     @Query(value = """
             SELECT p.product_id  AS productId,
                    p.name        AS productName,

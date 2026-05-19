@@ -34,20 +34,20 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElse(null);
-
-        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash()))
-            return ResponseEntity.status(401).body("Hatalı kullanıcı adı veya şifre.");
-
-        if (!user.isActive())
-            return ResponseEntity.status(403).body("Hesabınız pasif. Yöneticinizle iletişime geçin.");
-
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
-        Integer warehouseId   = user.getWarehouse() != null ? user.getWarehouse().getId() : null;
-        String  warehouseName = user.getWarehouse() != null ? user.getWarehouse().getName() : null;
-        return ResponseEntity.ok(new AuthResponse(token, user.getUsername(),
-                user.getRole().name(), user.isForcePasswordChange(), warehouseId, warehouseName));
+        try {
+            User user = userRepository.findByUsername(request.getUsername()).orElse(null);
+            if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash()))
+                return ResponseEntity.status(401).body("Hatalı kullanıcı adı veya şifre.");
+            if (!user.isActive())
+                return ResponseEntity.status(403).body("Hesabınız pasif. Yöneticinizle iletişime geçin.");
+            String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
+            Integer warehouseId   = user.getWarehouse() != null ? user.getWarehouse().getId() : null;
+            String  warehouseName = user.getWarehouse() != null ? user.getWarehouse().getName() : null;
+            return ResponseEntity.ok(new AuthResponse(token, user.getUsername(),
+                    user.getRole().name(), user.isForcePasswordChange(), warehouseId, warehouseName));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Giriş işlemi sırasında bir hata oluştu.");
+        }
     }
 
     @PostMapping("/register")
