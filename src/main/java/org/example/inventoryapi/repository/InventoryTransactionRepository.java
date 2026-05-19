@@ -12,6 +12,8 @@ import java.util.List;
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, Integer> {
     List<InventoryTransaction> findAllByOrderByTransactionDateDesc();
 
+    List<InventoryTransaction> findByProduct_IdOrderByTransactionDateDesc(int productId);
+
     @Query(value = """
             SELECT p.product_id  AS productId,
                    p.name        AS productName,
