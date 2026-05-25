@@ -1,5 +1,6 @@
 package org.example.inventoryapi.repository;
 
+import org.example.inventoryapi.dto.AllProductsStock;
 import org.example.inventoryapi.dto.WarehouseStockItem;
 import org.example.inventoryapi.dto.ProductWarehouseStock;
 import org.example.inventoryapi.model.entity.InventoryTransaction;
@@ -76,6 +77,32 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
             ORDER BY w.name
             """, nativeQuery = true)
     List<ProductWarehouseStock> findStockByProduct(@Param("pid") int productId);
+
+    @Query(value = """
+            SELECT p.product_id   AS productId,
+                   w.warehouse_id AS warehouseId,
+                   w.name         AS warehouseName,
+                   COALESCE(SUM(
+                       CASE
+                           WHEN t.transaction_type = 'IN'       AND t.warehouse_id             = w.warehouse_id THEN  t.quantity
+                           WHEN t.transaction_type = 'OUT'      AND t.warehouse_id             = w.warehouse_id THEN -t.quantity
+                           WHEN t.transaction_type = 'TRANSFER' AND t.warehouse_id             = w.warehouse_id THEN -t.quantity
+                           WHEN t.transaction_type = 'TRANSFER' AND t.destination_warehouse_id = w.warehouse_id THEN  t.quantity
+                           ELSE 0
+                       END
+                   ), 0) AS quantity
+            FROM Products p
+            CROSS JOIN Warehouses w
+            LEFT JOIN Inventory_Transactions t
+                   ON t.product_id = p.product_id
+                  AND (t.warehouse_id = w.warehouse_id OR t.destination_warehouse_id = w.warehouse_id)
+            GROUP BY p.product_id, w.warehouse_id, w.name
+            HAVING quantity > 0
+            ORDER BY p.product_id, w.name
+            """, nativeQuery = true)
+    List<AllProductsStock> findAllProductWarehouseStocks();
+
+    List<InventoryTransaction> findByProduct_IdInOrderByTransactionDateDesc(List<Integer> productIds);
 
     @Query(value = """
             SELECT COALESCE(SUM(

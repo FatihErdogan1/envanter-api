@@ -37,6 +37,10 @@ public class User {
     @JoinColumn(name = "warehouse_id")
     private Warehouse warehouse;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "supplier_id")
+    private Supplier supplier;
+
     public User() {}
 
     public int getId()                          { return id; }
@@ -55,4 +59,6 @@ public class User {
     public void setForcePasswordChange(boolean v) { this.forcePasswordChange = v; }
     public Warehouse getWarehouse()               { return warehouse; }
     public void setWarehouse(Warehouse w)         { this.warehouse = w; }
+    public Supplier getSupplier()                 { return supplier; }
+    public void setSupplier(Supplier s)           { this.supplier = s; }
 }

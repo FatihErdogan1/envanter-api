@@ -226,6 +226,10 @@ public class AssetService {
         return assetRepository.getStatusSummaryByWarehouse();
     }
 
+    public List<Object[]> getWarehouseStatusSummaryById(int warehouseId) {
+        return assetRepository.getStatusSummaryByWarehouseId(warehouseId);
+    }
+
     private void checkWarehouseAccess(User requestingUser, Asset asset) {
         if (isAdmin(requestingUser)) return;
         if (requestingUser.getWarehouse() == null || asset.getWarehouse() == null

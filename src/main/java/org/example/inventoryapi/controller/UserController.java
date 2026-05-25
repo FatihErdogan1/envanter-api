@@ -1,8 +1,10 @@
 package org.example.inventoryapi.controller;
 
+import org.example.inventoryapi.model.entity.Supplier;
 import org.example.inventoryapi.model.entity.User;
 import org.example.inventoryapi.model.entity.Warehouse;
 import org.example.inventoryapi.model.enums.Role;
+import org.example.inventoryapi.repository.SupplierRepository;
 import org.example.inventoryapi.repository.WarehouseRepository;
 import org.example.inventoryapi.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +20,13 @@ public class UserController {
 
     private final UserService         userService;
     private final WarehouseRepository warehouseRepository;
+    private final SupplierRepository  supplierRepository;
 
-    public UserController(UserService userService, WarehouseRepository warehouseRepository) {
+    public UserController(UserService userService, WarehouseRepository warehouseRepository,
+                          SupplierRepository supplierRepository) {
         this.userService         = userService;
         this.warehouseRepository = warehouseRepository;
+        this.supplierRepository  = supplierRepository;
     }
 
     @GetMapping
@@ -58,6 +63,14 @@ public class UserController {
                         .orElseThrow(() -> new IllegalArgumentException("Depo bulunamadı."));
                 user.setWarehouse(warehouse);
             }
+
+            Object spIdObj = body.get("supplierId");
+            if (spIdObj != null && !(spIdObj instanceof String s && s.isBlank())) {
+                int supplierId = spIdObj instanceof Integer i ? i : Integer.parseInt(spIdObj.toString());
+                Supplier supplier = supplierRepository.findById(supplierId)
+                        .orElseThrow(() -> new IllegalArgumentException("Tedarikçi bulunamadı."));
+                user.setSupplier(supplier);
+            }
             return ResponseEntity.ok(userService.createUserByAdmin(user));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -91,6 +104,17 @@ public class UserController {
                                 .orElseThrow(() -> new IllegalArgumentException("Depo bulunamadı."))
                         : null;
                 userService.updateUserWarehouse(id, warehouse);
+            }
+            if (body.containsKey("supplierId")) {
+                Object spIdObj = body.get("supplierId");
+                if (spIdObj != null) {
+                    int supplierId = spIdObj instanceof Integer i ? i : Integer.parseInt(spIdObj.toString());
+                    Supplier supplier = supplierRepository.findById(supplierId)
+                            .orElseThrow(() -> new IllegalArgumentException("Tedarikçi bulunamadı."));
+                    userService.updateUserSupplier(id, supplier);
+                } else {
+                    userService.updateUserSupplier(id, null);
+                }
             }
             return ResponseEntity.ok(userService.getById(id));
         } catch (Exception e) {

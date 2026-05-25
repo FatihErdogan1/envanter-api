@@ -43,8 +43,11 @@ public class AuthController {
             String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
             Integer warehouseId   = user.getWarehouse() != null ? user.getWarehouse().getId() : null;
             String  warehouseName = user.getWarehouse() != null ? user.getWarehouse().getName() : null;
+            Integer supplierId    = user.getSupplier() != null ? user.getSupplier().getId() : null;
+            String  supplierName  = user.getSupplier() != null ? user.getSupplier().getName() : null;
             return ResponseEntity.ok(new AuthResponse(token, user.getUsername(),
-                    user.getRole().name(), user.isForcePasswordChange(), warehouseId, warehouseName));
+                    user.getRole().name(), user.isForcePasswordChange(),
+                    warehouseId, warehouseName, supplierId, supplierName));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Giriş işlemi sırasında bir hata oluştu.");
         }

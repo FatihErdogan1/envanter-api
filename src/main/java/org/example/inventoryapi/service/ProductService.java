@@ -1,5 +1,6 @@
 package org.example.inventoryapi.service;
 
+import org.example.inventoryapi.dto.AllProductsStock;
 import org.example.inventoryapi.dto.ProductWarehouseStock;
 import org.example.inventoryapi.exception.DeletionBlockedException;
 import org.example.inventoryapi.model.entity.InventoryTransaction;
@@ -18,8 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -42,14 +45,18 @@ public class ProductService {
 
     public List<Product> getAllProducts() {
         List<Product> products = productRepository.findAll();
-        products.forEach(this::attachWarehouseStocks);
+        Map<Integer, List<ProductWarehouseStock>> stockMap = new HashMap<>();
+        for (AllProductsStock s : transactionRepository.findAllProductWarehouseStocks()) {
+            stockMap.computeIfAbsent(s.getProductId(), k -> new ArrayList<>()).add(s);
+        }
+        products.forEach(p -> p.setWarehouseStocks(stockMap.getOrDefault(p.getId(), List.of())));
         return products;
     }
 
     public Product getProduct(int id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı."));
-        attachWarehouseStocks(product);
+        product.setWarehouseStocks(transactionRepository.findStockByProduct(id));
         return product;
     }
 
@@ -179,7 +186,4 @@ public class ProductService {
             throw new IllegalStateException("Yalnızca kayıtlı deponuza ürün ekleyip düzenleyebilirsiniz.");
     }
 
-    private void attachWarehouseStocks(Product product) {
-        product.setWarehouseStocks(transactionRepository.findStockByProduct(product.getId()));
-    }
 }

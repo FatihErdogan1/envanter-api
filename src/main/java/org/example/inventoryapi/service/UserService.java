@@ -158,6 +158,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User updateUserSupplier(int userId, org.example.inventoryapi.model.entity.Supplier supplier) {
+        User user = getOrThrow(userId);
+        user.setSupplier(supplier);
+        return userRepository.save(user);
+    }
+
     public void changePassword(int userId, String currentPassword, String newPassword) {
         validatePassword(newPassword);
         User user = getOrThrow(userId);

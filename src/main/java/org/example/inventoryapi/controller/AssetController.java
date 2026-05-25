@@ -1,8 +1,8 @@
 package org.example.inventoryapi.controller;
 
-import org.example.inventoryapi.dto.DeletionErrorResponse;
-import org.example.inventoryapi.exception.DeletionBlockedException;
+import org.example.inventoryapi.dto.PageResponse;
 import org.example.inventoryapi.model.entity.*;
+import org.example.inventoryapi.model.enums.Role;
 import org.example.inventoryapi.repository.UserRepository;
 import org.example.inventoryapi.repository.WarehouseRepository;
 import org.example.inventoryapi.service.AssetService;
@@ -29,105 +29,77 @@ public class AssetController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAll(@AuthenticationPrincipal String username) {
-        try {
-            User user = getUser(username);
-            return ResponseEntity.ok(assetService.getAllAssets(user));
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public List<Asset> getAll(@AuthenticationPrincipal String username) {
+        return assetService.getAllAssets(getUser(username));
     }
 
     @PostMapping
-    public ResponseEntity<?> add(@AuthenticationPrincipal String username, @RequestBody Asset asset) {
-        try {
-            User requestingUser = getUser(username);
-            return ResponseEntity.ok(assetService.addAsset(asset, requestingUser));
-        } catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public Asset add(@AuthenticationPrincipal String username, @RequestBody Asset asset) {
+        return assetService.addAsset(asset, getUser(username));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable int id, @RequestBody Asset asset) {
-        try { return ResponseEntity.ok(assetService.updateAsset(id, asset)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public Asset update(@PathVariable int id, @RequestBody Asset asset) {
+        return assetService.updateAsset(id, asset);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable int id) {
-        try { assetService.deleteAsset(id); return ResponseEntity.ok("Demirbaş silindi."); }
-        catch (DeletionBlockedException e) { return ResponseEntity.status(409).body(DeletionErrorResponse.of(e.getMessage(), e.getCount(), e.getRelatedEntity())); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> delete(@PathVariable int id) {
+        assetService.deleteAsset(id);
+        return ResponseEntity.ok("Demirbaş silindi.");
     }
 
     @PostMapping("/{id}/assign")
-    public ResponseEntity<?> assign(@AuthenticationPrincipal String username,
-                                    @PathVariable int id,
-                                    @RequestBody Map<String, Object> body) {
-        try {
-            User requestingUser = getUser(username);
-            int targetUserId = (int) body.get("userId");
-            String notes = (String) body.getOrDefault("notes", "");
-            User targetUser = userRepository.findById(targetUserId)
-                    .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı."));
-            assetService.assignAsset(id, requestingUser, targetUser, notes);
-            return ResponseEntity.ok("Demirbaş zimmetlendi.");
-        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
-          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> assign(@AuthenticationPrincipal String username,
+                                         @PathVariable int id,
+                                         @RequestBody Map<String, Object> body) {
+        int targetUserId = (int) body.get("userId");
+        String notes = (String) body.getOrDefault("notes", "");
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı."));
+        assetService.assignAsset(id, getUser(username), targetUser, notes);
+        return ResponseEntity.ok("Demirbaş zimmetlendi.");
     }
 
     @PostMapping("/{id}/return")
-    public ResponseEntity<?> returnAsset(@AuthenticationPrincipal String username,
-                                         @PathVariable int id) {
-        try {
-            User requestingUser = getUser(username);
-            assetService.returnAsset(id, requestingUser);
-            return ResponseEntity.ok("Zimmet düşürüldü.");
-        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
-          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> returnAsset(@AuthenticationPrincipal String username,
+                                               @PathVariable int id) {
+        assetService.returnAsset(id, getUser(username));
+        return ResponseEntity.ok("Zimmet düşürüldü.");
     }
 
     @PostMapping("/{id}/retire")
-    public ResponseEntity<?> retire(@AuthenticationPrincipal String username,
-                                    @PathVariable int id) {
-        try {
-            assetService.retireAsset(id, getUser(username));
-            return ResponseEntity.ok("Demirbaş hurdaya ayrıldı.");
-        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
-          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> retire(@AuthenticationPrincipal String username,
+                                          @PathVariable int id) {
+        assetService.retireAsset(id, getUser(username));
+        return ResponseEntity.ok("Demirbaş hurdaya ayrıldı.");
     }
 
     @PostMapping("/{id}/transfer")
-    public ResponseEntity<?> transfer(@AuthenticationPrincipal String username,
-                                      @PathVariable int id,
-                                      @RequestBody Map<String, Object> body) {
-        try {
-            int warehouseId = (int) body.get("warehouseId");
-            String notes = (String) body.getOrDefault("notes", "");
-            Warehouse to = warehouseRepository.findById(warehouseId)
-                    .orElseThrow(() -> new IllegalArgumentException("Depo bulunamadı."));
-            assetService.transferAsset(id, to, notes, getUser(username));
-            return ResponseEntity.ok("Transfer tamamlandı.");
-        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
-          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> transfer(@AuthenticationPrincipal String username,
+                                            @PathVariable int id,
+                                            @RequestBody Map<String, Object> body) {
+        int warehouseId = (int) body.get("warehouseId");
+        String notes = (String) body.getOrDefault("notes", "");
+        Warehouse to = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new IllegalArgumentException("Depo bulunamadı."));
+        assetService.transferAsset(id, to, notes, getUser(username));
+        return ResponseEntity.ok("Transfer tamamlandı.");
     }
 
     @PostMapping("/{id}/maintenance/start")
-    public ResponseEntity<?> startMaintenance(@AuthenticationPrincipal String username,
-                                              @PathVariable int id,
-                                              @RequestBody Map<String, String> body) {
-        try {
-            assetService.startMaintenance(id, body.get("description"), body.getOrDefault("notes", ""), getUser(username));
-            return ResponseEntity.ok("Demirbaş bakıma alındı.");
-        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
-          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> startMaintenance(@AuthenticationPrincipal String username,
+                                                    @PathVariable int id,
+                                                    @RequestBody Map<String, String> body) {
+        assetService.startMaintenance(id, body.get("description"), body.getOrDefault("notes", ""), getUser(username));
+        return ResponseEntity.ok("Demirbaş bakıma alındı.");
     }
 
     @PostMapping("/{id}/maintenance/end")
-    public ResponseEntity<?> endMaintenance(@AuthenticationPrincipal String username,
-                                            @PathVariable int id) {
-        try {
-            assetService.endMaintenance(id, getUser(username));
-            return ResponseEntity.ok("Bakım tamamlandı.");
-        } catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
-          catch (Exception e)          { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> endMaintenance(@AuthenticationPrincipal String username,
+                                                  @PathVariable int id) {
+        assetService.endMaintenance(id, getUser(username));
+        return ResponseEntity.ok("Bakım tamamlandı.");
     }
 
     @GetMapping("/{id}/assignments")
@@ -146,7 +118,14 @@ public class AssetController {
     }
 
     @GetMapping("/warehouse-summary")
-    public List<Object[]> warehouseSummary() { return assetService.getWarehouseStatusSummary(); }
+    public ResponseEntity<?> warehouseSummary(@AuthenticationPrincipal String username) {
+        User user = getUser(username);
+        if (user.getRole() == Role.MANAGER) {
+            if (user.getWarehouse() == null) return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(assetService.getWarehouseStatusSummaryById(user.getWarehouse().getId()));
+        }
+        return ResponseEntity.ok(assetService.getWarehouseStatusSummary());
+    }
 
     private User getUser(String username) {
         return userRepository.findByUsername(username)

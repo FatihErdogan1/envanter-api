@@ -44,6 +44,20 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/stock-requests/*/approve", "/api/stock-requests/*/reject").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.GET, "/api/stock-requests/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/stock-requests").authenticated()
+                // Products: SUPPLIER has no access (uses /api/supplier-orders/my-products instead)
+                .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "MANAGER", "STAFF")
+                // Notifications: all authenticated users (must be before PUT /api/**)
+                .requestMatchers("/api/notifications/**").authenticated()
+                // Supplier portal endpoints
+                .requestMatchers(HttpMethod.GET, "/api/supplier-orders/my-products").hasRole("SUPPLIER")
+                .requestMatchers(HttpMethod.PATCH, "/api/supplier-orders/my-products/*/price").hasRole("SUPPLIER")
+                .requestMatchers(HttpMethod.GET, "/api/supplier-orders/my-transactions").hasRole("SUPPLIER")
+                .requestMatchers(HttpMethod.PATCH, "/api/supplier-orders/*/approve").hasAnyRole("ADMIN", "SUPPLIER")
+                .requestMatchers(HttpMethod.PATCH, "/api/supplier-orders/*/reject").hasAnyRole("ADMIN", "SUPPLIER")
+                .requestMatchers(HttpMethod.PATCH, "/api/supplier-orders/*/ship").hasAnyRole("ADMIN", "SUPPLIER")
+                .requestMatchers(HttpMethod.GET, "/api/supplier-orders").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/supplier-orders").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PATCH, "/api/supplier-orders/*/deliver").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.POST, "/api/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.PUT, "/api/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyRole("ADMIN", "MANAGER")
@@ -58,7 +72,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 

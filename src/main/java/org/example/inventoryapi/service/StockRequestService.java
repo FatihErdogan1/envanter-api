@@ -5,12 +5,14 @@ import org.example.inventoryapi.model.entity.Product;
 import org.example.inventoryapi.model.entity.StockRequest;
 import org.example.inventoryapi.model.entity.User;
 import org.example.inventoryapi.model.entity.Warehouse;
+import org.example.inventoryapi.model.enums.NotificationType;
 import org.example.inventoryapi.model.enums.Role;
 import org.example.inventoryapi.model.enums.StockRequestStatus;
 import org.example.inventoryapi.model.enums.TransactionType;
 import org.example.inventoryapi.repository.InventoryTransactionRepository;
 import org.example.inventoryapi.repository.ProductRepository;
 import org.example.inventoryapi.repository.StockRequestRepository;
+import org.example.inventoryapi.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +25,19 @@ public class StockRequestService {
     private final StockRequestRepository stockRequestRepository;
     private final ProductRepository productRepository;
     private final InventoryTransactionRepository transactionRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public StockRequestService(StockRequestRepository stockRequestRepository,
                                ProductRepository productRepository,
-                               InventoryTransactionRepository transactionRepository) {
+                               InventoryTransactionRepository transactionRepository,
+                               UserRepository userRepository,
+                               NotificationService notificationService) {
         this.stockRequestRepository = stockRequestRepository;
         this.productRepository = productRepository;
         this.transactionRepository = transactionRepository;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public List<StockRequest> getRequestsFor(User user) {
@@ -49,7 +57,15 @@ public class StockRequestService {
         request.setRequestedBy(requester);
         request.setStatus(StockRequestStatus.PENDING);
         request.setRequestDate(LocalDateTime.now());
-        return stockRequestRepository.save(request);
+        StockRequest saved = stockRequestRepository.save(request);
+
+        String msg = product.getName() + " için " + quantity + " adet stok talebi";
+        userRepository.findByRoleAndWarehouse_Id(Role.MANAGER, warehouse.getId())
+                .forEach(manager -> notificationService.createNotification(
+                        manager.getId(), "Yeni Stok Talebi", msg,
+                        NotificationType.STOCK_REQUEST, saved.getId()));
+
+        return saved;
     }
 
     @Transactional
@@ -74,7 +90,17 @@ public class StockRequestService {
         request.setReviewedBy(reviewer);
         request.setManagerNote(managerNote);
         request.setReviewDate(LocalDateTime.now());
-        return stockRequestRepository.save(request);
+        StockRequest saved = stockRequestRepository.save(request);
+
+        if (request.getRequestedBy().getId() != reviewer.getId()) {
+            notificationService.createNotification(
+                    request.getRequestedBy().getId(),
+                    "Stok Talebiniz Onaylandı",
+                    product.getName() + " talebi onaylandı",
+                    NotificationType.STOCK_REQUEST, id);
+        }
+
+        return saved;
     }
 
     public StockRequest reject(int id, User reviewer, String managerNote) {
@@ -83,7 +109,17 @@ public class StockRequestService {
         request.setReviewedBy(reviewer);
         request.setManagerNote(managerNote);
         request.setReviewDate(LocalDateTime.now());
-        return stockRequestRepository.save(request);
+        StockRequest saved = stockRequestRepository.save(request);
+
+        if (request.getRequestedBy().getId() != reviewer.getId()) {
+            notificationService.createNotification(
+                    request.getRequestedBy().getId(),
+                    "Stok Talebiniz Reddedildi",
+                    request.getProduct().getName() + " talebi reddedildi",
+                    NotificationType.STOCK_REQUEST, id);
+        }
+
+        return saved;
     }
 
     private StockRequest getPending(int id) {

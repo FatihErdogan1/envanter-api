@@ -2,11 +2,14 @@ package org.example.inventoryapi.controller;
 
 import org.example.inventoryapi.dto.DeletionErrorResponse;
 import org.example.inventoryapi.dto.WarehouseStockItem;
-import org.example.inventoryapi.exception.DeletionBlockedException;
+import org.example.inventoryapi.model.entity.User;
 import org.example.inventoryapi.model.entity.Warehouse;
+import org.example.inventoryapi.model.enums.Role;
+import org.example.inventoryapi.repository.UserRepository;
 import org.example.inventoryapi.service.InventoryService;
 import org.example.inventoryapi.service.WarehouseService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,36 +20,42 @@ public class WarehouseController {
 
     private final WarehouseService warehouseService;
     private final InventoryService inventoryService;
+    private final UserRepository   userRepository;
 
-    public WarehouseController(WarehouseService warehouseService, InventoryService inventoryService) {
-        this.warehouseService  = warehouseService;
-        this.inventoryService  = inventoryService;
+    public WarehouseController(WarehouseService warehouseService, InventoryService inventoryService,
+                               UserRepository userRepository) {
+        this.warehouseService = warehouseService;
+        this.inventoryService = inventoryService;
+        this.userRepository   = userRepository;
     }
 
     @GetMapping
     public List<Warehouse> getAll() { return warehouseService.getAllWarehouses(); }
 
     @PostMapping
-    public ResponseEntity<?> add(@RequestBody Warehouse warehouse) {
-        try { return ResponseEntity.ok(warehouseService.addWarehouse(warehouse)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public Warehouse add(@RequestBody Warehouse warehouse) {
+        return warehouseService.addWarehouse(warehouse);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable int id, @RequestBody Warehouse warehouse) {
-        try { return ResponseEntity.ok(warehouseService.updateWarehouse(id, warehouse)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public Warehouse update(@PathVariable int id, @RequestBody Warehouse warehouse) {
+        return warehouseService.updateWarehouse(id, warehouse);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable int id) {
-        try { warehouseService.deleteWarehouse(id); return ResponseEntity.ok("Depo silindi."); }
-        catch (DeletionBlockedException e) { return ResponseEntity.status(409).body(DeletionErrorResponse.of(e.getMessage(), e.getCount(), e.getRelatedEntity())); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> delete(@PathVariable int id) {
+        warehouseService.deleteWarehouse(id);
+        return ResponseEntity.ok("Depo silindi.");
     }
 
     @GetMapping("/{id}/stock")
-    public List<WarehouseStockItem> getStock(@PathVariable int id) {
+    public List<WarehouseStockItem> getStock(@AuthenticationPrincipal String username, @PathVariable int id) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Kullanıcı bulunamadı."));
+        if (user.getRole() == Role.MANAGER) {
+            if (user.getWarehouse() == null || user.getWarehouse().getId() != id)
+                throw new SecurityException("Bu depoya erişim yetkiniz yok.");
+        }
         return inventoryService.getWarehouseStock(id);
     }
 }

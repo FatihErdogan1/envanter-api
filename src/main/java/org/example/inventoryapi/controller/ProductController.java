@@ -1,9 +1,10 @@
 package org.example.inventoryapi.controller;
 
-import org.example.inventoryapi.dto.DeletionErrorResponse;
-import org.example.inventoryapi.exception.DeletionBlockedException;
+import org.example.inventoryapi.dto.PageResponse;
 import org.example.inventoryapi.model.entity.Product;
+import org.example.inventoryapi.model.entity.Supplier;
 import org.example.inventoryapi.model.entity.User;
+import org.example.inventoryapi.model.enums.Role;
 import org.example.inventoryapi.repository.UserRepository;
 import org.example.inventoryapi.service.ProductService;
 import org.springframework.http.ResponseEntity;
@@ -25,50 +26,56 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> getAll() { return productService.getAllProducts(); }
+    public PageResponse<Product> getAll(
+            @AuthenticationPrincipal String username,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        User user = getUser(username);
+        List<Product> products = productService.getAllProducts();
+        if (user.getRole() == Role.MANAGER) {
+            if (user.getWarehouse() == null) return PageResponse.of(List.of(), page, size);
+            int warehouseId = user.getWarehouse().getId();
+            products = products.stream()
+                    .filter(p -> p.getWarehouse() != null && p.getWarehouse().getId() == warehouseId)
+                    .toList();
+        }
+        return PageResponse.of(products, page, size);
+    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable int id) {
-        try { return ResponseEntity.ok(productService.getProduct(id)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public Product getById(@PathVariable int id) {
+        return productService.getProduct(id);
     }
 
     @PostMapping
-    public ResponseEntity<?> add(@AuthenticationPrincipal String username, @RequestBody Product product) {
-        try { return ResponseEntity.ok(productService.addProduct(product, getUser(username))); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public Product add(@AuthenticationPrincipal String username, @RequestBody Product product) {
+        return productService.addProduct(product, getUser(username));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@AuthenticationPrincipal String username, @PathVariable int id, @RequestBody Product product) {
-        try { return ResponseEntity.ok(productService.updateProduct(id, product, getUser(username))); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public Product update(@AuthenticationPrincipal String username, @PathVariable int id, @RequestBody Product product) {
+        return productService.updateProduct(id, product, getUser(username));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@AuthenticationPrincipal String username, @PathVariable int id) {
-        try { productService.deleteProduct(id, getUser(username)); return ResponseEntity.ok("Ürün silindi."); }
-        catch (SecurityException e) { return ResponseEntity.status(403).body(e.getMessage()); }
-        catch (DeletionBlockedException e) { return ResponseEntity.status(409).body(DeletionErrorResponse.of(e.getMessage(), e.getCount(), e.getRelatedEntity())); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public ResponseEntity<String> delete(@AuthenticationPrincipal String username, @PathVariable int id) {
+        productService.deleteProduct(id, getUser(username));
+        return ResponseEntity.ok("Ürün silindi.");
     }
 
     @GetMapping("/{id}/stock-summary")
-    public ResponseEntity<?> stockSummary(@PathVariable int id) {
-        try { return ResponseEntity.ok(productService.getProductStockSummary(id)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public List<?> stockSummary(@PathVariable int id) {
+        return productService.getProductStockSummary(id);
     }
 
     @GetMapping("/{id}/suppliers")
-    public ResponseEntity<?> suppliers(@PathVariable int id) {
-        try { return ResponseEntity.ok(productService.getProductSuppliers(id)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public List<Supplier> suppliers(@PathVariable int id) {
+        return productService.getProductSuppliers(id);
     }
 
     @GetMapping("/{id}/transaction-history")
-    public ResponseEntity<?> transactionHistory(@PathVariable int id) {
-        try { return ResponseEntity.ok(productService.getProductTransactionHistory(id)); }
-        catch (Exception e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    public List<?> transactionHistory(@PathVariable int id) {
+        return productService.getProductTransactionHistory(id);
     }
 
     private User getUser(String username) {
