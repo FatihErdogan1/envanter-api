@@ -70,8 +70,12 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        userService.forgotPassword(request.getEmail());
-        return ResponseEntity.ok("E-posta adresiniz kayıtlıysa geçici şifre gönderildi.");
+        try {
+            userService.forgotPassword(request.getEmail());
+            return ResponseEntity.ok("E-posta adresiniz kayıtlıysa geçici şifre gönderildi.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Mail gönderilemedi. Lütfen sistem yöneticinizle iletişime geçin.");
+        }
     }
 
     @PostMapping("/change-password")
