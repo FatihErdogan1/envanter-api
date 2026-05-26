@@ -34,7 +34,6 @@ public class Asset {
     @Column(name = "status", nullable = false)
     private AssetStatus status;
 
-    // DB'de saklanmaz; sorgu ile doldurulur
     @Transient
     private String assignedToUsername;
 

@@ -125,7 +125,6 @@ public class UserService {
         userRepository.findByEmail(email).ifPresent(user -> {
             if (user.getRole() == Role.ADMIN) return;
             String tempPassword = generateTempPassword();
-            // Mail önce gönderilir; başarısız olursa şifre güncellenmez
             mailService.sendPasswordReset(user.getEmail(), tempPassword);
             user.setPasswordHash(passwordEncoder.encode(tempPassword));
             user.setForcePasswordChange(true);

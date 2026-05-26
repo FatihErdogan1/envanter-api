@@ -83,7 +83,6 @@ public class SupplierOrderController {
         return changeStatus(id, SupplierOrderStatus.TESLIM_ALINDI, username);
     }
 
-    // Supplier portal: list supplier's own products
     @GetMapping("/my-products")
     public ResponseEntity<?> myProducts(@AuthenticationPrincipal String username) {
         try {
@@ -97,7 +96,6 @@ public class SupplierOrderController {
         }
     }
 
-    // Supplier portal: update product price
     @PatchMapping("/my-products/{productId}/price")
     public ResponseEntity<?> updatePrice(@AuthenticationPrincipal String username,
                                          @PathVariable int productId,
@@ -117,7 +115,6 @@ public class SupplierOrderController {
         }
     }
 
-    // Supplier portal: transaction history for own products
     @GetMapping("/my-transactions")
     public ResponseEntity<?> myTransactions(@AuthenticationPrincipal String username) {
         try {
