@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(tasklist /fi \"pid eq 21808\")",
+      "PowerShell(taskkill /PID 21808 /F)",
+      "PowerShell(netstat -ano)",
+      "PowerShell(taskkill /PID 11652 /F)",
+      "PowerShell(Invoke-RestMethod -Uri \"http://localhost:8080/api/auth/forgot-password\" -Method POST -ContentType \"application/json\" -Body '{\"email\":\"fyf.fatih6574@gmail.com\"}')",
+      "Read(//c/Users/fyffa/Desktop/dersler/**)",
+      "PowerShell(netstat -ano | findstr :8080 | Select-String \"LISTENING\" | ForEach-Object { \\($_ -split '\\\\s+'\\)[-1] } | ForEach-Object { taskkill /PID $_ /F })",
+      "PowerShell(head)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\fyffa\\Desktop\\dersler\\envanter-ui\\src\\types",
+      "c:\\Users\\fyffa\\Desktop\\dersler\\envanter-ui\\src\\context",
+      "c:\\Users\\fyffa\\Desktop\\dersler\\envanter-ui\\src\\api",
+      "c:\\Users\\fyffa\\Desktop\\dersler\\envanter-ui\\src\\pages"
+    ]
+  }
+}

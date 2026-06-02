@@ -11,11 +11,11 @@ import org.springframework.data.repository.query.Param;
 public interface ProductRepository extends JpaRepository<Product, Integer> {
     boolean existsBySkuIgnoreCase(String sku);
     boolean existsBySkuIgnoreCaseAndIdNot(String sku, int id);
-    long countByQuantityInStockLessThan(int threshold);
+    long countByQuantityInStockLessThanEqual(int threshold);
     @Query("SELECT COUNT(p) FROM Product p JOIN p.suppliers s WHERE s.id = :supplierId")
     int countBySupplierId(@Param("supplierId") int supplierId);
     int countByWarehouseId(int warehouseId);
-    long countByWarehouseIdAndQuantityInStockLessThan(int warehouseId, int threshold);
+    long countByWarehouseIdAndQuantityInStockLessThanEqual(int warehouseId, int threshold);
     int countByCategoryId(int categoryId);
     @Query("SELECT p FROM Product p JOIN p.suppliers s WHERE s.id = :supplierId")
     List<Product> findBySupplierId(@Param("supplierId") int supplierId);

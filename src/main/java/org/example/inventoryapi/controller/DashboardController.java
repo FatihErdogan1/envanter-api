@@ -17,6 +17,8 @@ import java.util.Map;
 @RequestMapping("/api/dashboard")
 public class DashboardController {
 
+    private static final int CRITICAL_STOCK_THRESHOLD = 5;
+
     private final UserRepository    userRepository;
     private final ProductRepository productRepository;
     private final AssetRepository   assetRepository;
@@ -54,7 +56,7 @@ public class DashboardController {
                 "inUseAssets",        warehouseAssets.stream().filter(a -> a.getStatus() == AssetStatus.IN_USE).count(),
                 "maintenanceAssets",  warehouseAssets.stream().filter(a -> a.getStatus() == AssetStatus.MAINTENANCE).count(),
                 "retiredAssets",      warehouseAssets.stream().filter(a -> a.getStatus() == AssetStatus.RETIRED).count(),
-                "criticalStockCount", productRepository.countByWarehouseIdAndQuantityInStockLessThan(warehouseId, 5)
+                "criticalStockCount", productRepository.countByWarehouseIdAndQuantityInStockLessThanEqual(warehouseId, CRITICAL_STOCK_THRESHOLD)
             );
         }
 
@@ -72,7 +74,7 @@ public class DashboardController {
         long retiredAssets      = assetRepository.findAll().stream()
                 .filter(a -> a.getStatus() == AssetStatus.RETIRED).count();
 
-        long criticalStockCount = productRepository.countByQuantityInStockLessThan(6);
+        long criticalStockCount = productRepository.countByQuantityInStockLessThanEqual(CRITICAL_STOCK_THRESHOLD);
 
         return Map.of(
             "totalUsers",         totalUsers,
