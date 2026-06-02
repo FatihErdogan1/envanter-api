@@ -5,7 +5,6 @@ import org.example.inventoryapi.model.entity.InventoryTransaction;
 import org.example.inventoryapi.model.entity.User;
 import org.example.inventoryapi.repository.UserRepository;
 import org.example.inventoryapi.service.InventoryService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,6 +1,5 @@
 package org.example.inventoryapi.controller;
 
-import org.example.inventoryapi.dto.DeletionErrorResponse;
 import org.example.inventoryapi.dto.WarehouseStockItem;
 import org.example.inventoryapi.model.entity.User;
 import org.example.inventoryapi.model.entity.Warehouse;

@@ -54,7 +54,7 @@ public class DashboardController {
                 "inUseAssets",        warehouseAssets.stream().filter(a -> a.getStatus() == AssetStatus.IN_USE).count(),
                 "maintenanceAssets",  warehouseAssets.stream().filter(a -> a.getStatus() == AssetStatus.MAINTENANCE).count(),
                 "retiredAssets",      warehouseAssets.stream().filter(a -> a.getStatus() == AssetStatus.RETIRED).count(),
-                "criticalStockCount", productRepository.countByWarehouseIdAndQuantityInStockLessThan(warehouseId, 10)
+                "criticalStockCount", productRepository.countByWarehouseIdAndQuantityInStockLessThan(warehouseId, 5)
             );
         }
 
@@ -72,7 +72,7 @@ public class DashboardController {
         long retiredAssets      = assetRepository.findAll().stream()
                 .filter(a -> a.getStatus() == AssetStatus.RETIRED).count();
 
-        long criticalStockCount = productRepository.countByQuantityInStockLessThan(10);
+        long criticalStockCount = productRepository.countByQuantityInStockLessThan(6);
 
         return Map.of(
             "totalUsers",         totalUsers,

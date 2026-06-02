@@ -1,6 +1,5 @@
 package org.example.inventoryapi.controller;
 
-import org.example.inventoryapi.dto.PageResponse;
 import org.example.inventoryapi.model.entity.*;
 import org.example.inventoryapi.model.enums.Role;
 import org.example.inventoryapi.repository.UserRepository;
